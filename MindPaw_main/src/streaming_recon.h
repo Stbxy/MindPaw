@@ -85,6 +85,7 @@ private:
     static String _buildBoundary();
     static String _buildMultipartBody(const String& boundary,
                                       unsigned long frameId,
+                                      int fps,
                                       const uint8_t* jpegBytes, size_t jpegLen);
 };
 

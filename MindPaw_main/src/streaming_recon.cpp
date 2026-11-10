@@ -68,13 +68,13 @@ bool StreamingReconClient::stopStreaming() {
 // ==================== POST 一帧 JPEG ====================
 bool StreamingReconClient::_postFrame(const uint8_t* jpegBytes, size_t jpegLen, unsigned long frameId) {
     String boundary = _buildBoundary();
-    String body = _buildMultipartBody(boundary, frameId, jpegBytes, jpegLen);
+    String body = _buildMultipartBody(boundary, frameId, _fps, jpegBytes, jpegLen);
 
     String url = _baseUrl + "/recon/frame";
     _http.begin(_tcpClient, url);
     _http.setTimeout(RECON_DEFAULT_TIMEOUT_MS);
     if (_token.length() > 0) {
-        _http.setAuthorization("Bearer " _token.c_str());
+        _http.addHeader("Authorization", "Bearer " + _token);
         // 注: setAuthorization 接受 user/pass; 上面写法对 ESP8266HTTPClient
         // 是合法构造；下面用 addHeader 更稳。
     }
@@ -134,6 +134,7 @@ String StreamingReconClient::_buildBoundary() {
 
 String StreamingReconClient::_buildMultipartBody(const String& boundary,
                                                   unsigned long frameId,
+                                                  int fps,
                                                   const uint8_t* jpegBytes, size_t jpegLen) {
     // 这里我们用 String 拼装 multipart，注意 ESP8266 的 80 KB RAM 上限
     // QQVGA JPEG 通常 <10 KB；String 临时占用 ~10 KB 峰值，可接受
@@ -150,7 +151,7 @@ String StreamingReconClient::_buildMultipartBody(const String& boundary,
     body += "\r\n--";
     body += boundary;
     body += "\r\nContent-Disposition: form-data; name=\"fps_target\"\r\n\r\n";
-    body += String(_fps);
+    body += String(fps);
     body += "\r\n--";
     body += boundary;
     body += "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"frame.jpg\"\r\n";
